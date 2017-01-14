@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+  - '6.7'
+services:
+  - mongodb
+cache:
+  directories:
+    - node_modules
+git:
+  depth: 3
+skip_cleanup: true
+before_script:
+  - echo -e "Host $DEPLOY_HOST\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+  - npm prune
+  - chmod +x deploy.sh
+after_script:
+  - npm run report-coverage
+after_success:
+  - ./deploy.sh
+addons:
+  apt:
+    packages:
+      - sshpass
