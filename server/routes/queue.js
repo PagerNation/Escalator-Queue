@@ -6,6 +6,6 @@ const router = express.Router();  // eslint-disable-line new-cap
 
 router.route('/')
 
-  .post(queueCtrl.checkStatus);
+  .post(queueCtrl.bulkCreatePages);
 
 export default router;

@@ -7,41 +7,39 @@ const PAGE_QUEUE_SIZE = 1000;
 
 queue.process('page', PAGE_QUEUE_SIZE, processPageQueue);
 
-bulkCreatePages([{
-  ticket: 'hello',
-  user: {
-    "_id" : "58a092962361da2fac76dae5",
-    "name" : "Whitney_Goodwin",
-    "email" : "Madyson.Walter@yahoo.com",
-    "role" : 0,
-    "delays" : [
-        1
-    ],
-    "devices" : [
-        {
-            "contactInformation" : "+15855061383",
-            "type" : "sms",
-            "name" : "et",
-            "__v" : 0,
-        },
-        {
-            "contactInformation" : "Rosemary0@gmail.com",
-            "type" : "email",
-            "name" : "aut",
-            "__v" : 0,
-        }
-    ]
-  },
-  deviceIndex: 0
-}]);
-
+// bulkCreatePages([{
+//   ticket: 'hello',
+//   user: {
+//     "_id" : "58a092962361da2fac76dae5",
+//     "name" : "Whitney_Goodwin",
+//     "email" : "Madyson.Walter@yahoo.com",
+//     "role" : 0,
+//     "delays" : [
+//         1
+//     ],
+//     "devices" : [
+//         {
+//             "contactInformation" : "+15855061383",
+//             "type" : "sms",
+//             "name" : "et",
+//             "__v" : 0,
+//         },
+//         {
+//             "contactInformation" : "Rosemary0@gmail.com",
+//             "type" : "email",
+//             "name" : "aut",
+//             "__v" : 0,
+//         }
+//     ]
+//   },
+//   deviceIndex: 0
+// }]);
 
 function bulkCreatePages(pageRequests) {
   const ticketPromises = pageRequests.map((page) => {
     const ticket = page.ticket;
     const user = page.user;
     const deviceIndex = page.deviceIndex;
-    console.log(page)
     return createDelayedPage(ticket, user, deviceIndex);
   });
 
@@ -93,7 +91,7 @@ function processPageQueue(job, done) {
       done();
     })
     .catch((err) => {
-      console.log(err);
+      console.log('err',err);
       done()
     });
 }
