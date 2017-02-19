@@ -1,7 +1,17 @@
 import httpStatus from 'http-status';
+import alertService from '../services/queue';
 
-function checkStatus(req, res) {
-  res.sendStatus(200);
+function bulkCreatePages(req, res, next) {
+  queueService.bulkCreatePages(req.body)
+    .then(() => res.status(httpStatus.OK))
+    .catch(err => next(err));
 }
 
-export default { checkStatus };
+function checkStatus(req, res) {
+  res.sendStatus(httpStatus.OK);
+}
+
+export default {
+  bulkCreatePages,
+  checkStatus
+};

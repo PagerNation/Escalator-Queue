@@ -9,6 +9,7 @@ try {
 
   for (var k in envConfig) { // eslint-disable-line
     process.env[k] = envConfig[k];
+    console.log(k, envConfig[k]);
   }
 } catch (err) {
   console.warn('Env variables not loaded! ', err);
