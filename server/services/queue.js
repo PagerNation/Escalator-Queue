@@ -1,39 +1,12 @@
 import request from 'request-promise-native';
 import queue from '../managers/queue';
 import config from '../../config/env';
+import { Job } from 'kue';
 
-const ONE_MINUTE_MILLISECONDS = 1000;//60 * 1000; TODO: CHANGE THIS BACK TO MINUTES
+const ONE_MINUTE_MILLISECONDS = 60 * 1000;
 const PAGE_QUEUE_SIZE = 1000;
 
 queue.process('page', PAGE_QUEUE_SIZE, processPageQueue);
-
-// bulkCreatePages([{
-//   ticket: 'hello',
-//   user: {
-//     "_id" : "58a092962361da2fac76dae5",
-//     "name" : "Whitney_Goodwin",
-//     "email" : "Madyson.Walter@yahoo.com",
-//     "role" : 0,
-//     "delays" : [
-//         1
-//     ],
-//     "devices" : [
-//         {
-//             "contactInformation" : "+15855061383",
-//             "type" : "sms",
-//             "name" : "et",
-//             "__v" : 0,
-//         },
-//         {
-//             "contactInformation" : "Rosemary0@gmail.com",
-//             "type" : "email",
-//             "name" : "aut",
-//             "__v" : 0,
-//         }
-//     ]
-//   },
-//   deviceIndex: 0
-// }]);
 
 function bulkCreatePages(pageRequests) {
   const ticketPromises = pageRequests.map((page) => {
@@ -46,35 +19,24 @@ function bulkCreatePages(pageRequests) {
   return Promise.all(ticketPromises);
 }
 
-// Start a delayed job
 function createDelayedPage(ticket, user, deviceIndex) {
   const jobDetails = {
     ticket,
     user,
-    device: user.devices[deviceIndex]
+    device: user.devices[deviceIndex],
+    title: ticket.metadata.title
   }
 
-  const job = queue.create('page', jobDetails)
-    .delay(user.delays[deviceIndex] * ONE_MINUTE_MILLISECONDS)
-    .save();
-
-  return Promise.resolve(job);
+  return new Promise((resolve, reject) => {
+    const job = queue.create('page', jobDetails)
+      .delay(user.delays[deviceIndex] * ONE_MINUTE_MILLISECONDS)
+      .save(() => {
+        resolve(job);
+      });
+  });
 }
 
-// job is the job being processed, includes all the data for the job
-// done is a callback for when the job is finished
 function processPageQueue(job, done) {
-  // 1 start process
-  // 2 get info from job about who to page {type, description, userId(for adding to the ticket)}
-  // 3 send page
-  // 4 save page in ticket on completed
-  // 5 queue up next page?
-
-  // const user = job.data.user;
-  // const ticket = job.data.ticket;
-  // const device = job.data.device;
-  // device instead of the user?
-
   const options = {
     method: 'POST',
     uri: `${config.apiHost}/${config.apiPath}`,
@@ -85,19 +47,24 @@ function processPageQueue(job, done) {
     json: true
   };
 
-  request(options)
+  return request(options)
     .then((res) => {
-      console.log('Sent to API',res);
       done();
-    })
-    .catch((err) => {
-      console.log('err',err);
-      done()
     });
+}
+
+function cancelPages(pageIds) {
+  return new Promise((resolve, reject) => {
+    for (var i = 0; i < pageIds.length; i++) {
+      Job.remove(pageIds[i], (err) => {});
+    }
+    resolve();
+  });
 }
 
 export default {
   bulkCreatePages,
   createDelayedPage,
-  processPageQueue
+  processPageQueue,
+  cancelPages
 };
