@@ -1,6 +1,12 @@
 import kue from 'kue';
 
-const queue = kue.createQueue();
-kue.app.listen(3001);
+export default (function () {
+  const queue = kue.createQueue();
+  kue.app.listen(3001);
 
-export default queue;
+  queue.enterTestMode = () => queue.testMode.enter();
+  queue.clearTestMode = () => queue.testMode.clear();
+  queue.exitTestMode = () => queue.testMode.exit();
+
+  return queue;
+}());

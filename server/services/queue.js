@@ -1,14 +1,17 @@
 import request from 'request-promise-native';
-import queue from '../managers/queue';
+import queueManager from '../managers/queue';
 import config from '../../config/env';
 import { Job } from 'kue';
 
 const ONE_MINUTE_MILLISECONDS = 60 * 1000;
 const PAGE_QUEUE_SIZE = 1000;
 
-queue.process('page', PAGE_QUEUE_SIZE, processPageQueue);
+queueManager.process('page', PAGE_QUEUE_SIZE, processPageQueue);
 
 function bulkCreatePages(pageRequests) {
+  if (!pageRequests) {
+    return Promise.resolve();
+  }
   const ticketPromises = pageRequests.map((page) => {
     const ticket = page.ticket;
     const user = page.user;
@@ -25,10 +28,10 @@ function createDelayedPage(ticket, user, deviceIndex) {
     user,
     device: user.devices[deviceIndex],
     title: ticket.metadata.title
-  }
+  };
 
   return new Promise((resolve, reject) => {
-    const job = queue.create('page', jobDetails)
+    const job = queueManager.create('page', jobDetails)
       .delay(user.delays[deviceIndex] * ONE_MINUTE_MILLISECONDS)
       .save(() => {
         resolve(job);
@@ -55,7 +58,7 @@ function processPageQueue(job, done) {
 
 function cancelPages(pageIds) {
   return new Promise((resolve, reject) => {
-    for (var i = 0; i < pageIds.length; i++) {
+    for (let i = 0; i < pageIds.length; i++) {
       Job.remove(pageIds[i], (err) => {});
     }
     resolve();
