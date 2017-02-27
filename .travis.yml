@@ -3,6 +3,7 @@ node_js:
   - '6.7'
 services:
   - mongodb
+  - redis-server
 cache:
   directories:
     - node_modules

@@ -4,9 +4,8 @@ import config from '../../config/env';
 import { Job } from 'kue';
 
 const ONE_MINUTE_MILLISECONDS = 60 * 1000;
-const PAGE_QUEUE_SIZE = 1000;
 
-queueManager.process('page', PAGE_QUEUE_SIZE, processPageQueue);
+queueManager.process('page', config.pageQueueSize, processPageQueue);
 
 function bulkCreatePages(pageRequests) {
   if (!pageRequests) {
