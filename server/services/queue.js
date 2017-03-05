@@ -3,8 +3,6 @@ import queueManager from '../managers/queue';
 import config from '../../config/env';
 import { Job } from 'kue';
 
-const ONE_MINUTE_MILLISECONDS = 60 * 1000;
-
 queueManager.process('page', config.pageQueueSize, processPageQueue);
 
 function bulkCreatePages(pageRequests) {
@@ -12,29 +10,29 @@ function bulkCreatePages(pageRequests) {
     return Promise.resolve();
   }
   const ticketPromises = pageRequests.map((page) => {
-    const ticket = page.ticket;
-    const user = page.user;
-    const deviceIndex = page.deviceIndex;
-    return createDelayedPage(ticket, user, deviceIndex);
+    const ticketId = page.ticketId;
+    const userId = page.userId;
+    const device = page.device;
+    const delay = page.delay;
+    const title = page.title;
+    return createDelayedPage(ticketId, userId, device, delay, title);
   });
 
   return Promise.all(ticketPromises);
 }
 
-function createDelayedPage(ticket, user, deviceIndex) {
+function createDelayedPage(ticketId, userId, device, delay, title) {
   const jobDetails = {
-    ticket,
-    user,
-    device: user.devices[deviceIndex],
-    title: ticket.metadata.title
+    ticketId,
+    userId,
+    device,
+    title: `${title} - ${device.name}`
   };
 
   return new Promise((resolve, reject) => {
     const job = queueManager.create('page', jobDetails)
-      .delay(user.delays[deviceIndex] * ONE_MINUTE_MILLISECONDS)
-      .save(() => {
-        resolve(job);
-      });
+      .delay(delay)
+      .save(() => resolve(job));
   });
 }
 
@@ -43,22 +41,20 @@ function processPageQueue(job, done) {
     method: 'POST',
     uri: `${config.apiHost}/${config.apiPath}`,
     headers: {
-      Authorization: `Bearer ${config.apiToken}`
+      Authorization: `${config.apiToken}`
     },
     body: job.data,
     json: true
   };
 
   return request(options)
-    .then((res) => {
-      done();
-    });
+    .then(res => done());
 }
 
 function cancelPages(pageIds) {
   return new Promise((resolve, reject) => {
     for (let i = 0; i < pageIds.length; i++) {
-      Job.remove(pageIds[i], (err) => {});
+      Job.remove(pageIds[i], () => {});
     }
     resolve();
   });
